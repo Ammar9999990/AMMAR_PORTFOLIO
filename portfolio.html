@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M. Ammar Hashmi | Deep Space Architect</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
+        
+        body { margin: 0; background-color: #000; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; scroll-behavior: smooth; }
+        
+        /* 1. STABLE BACKGROUND ( checkpoint: image_0.png logic ) */
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1 !important; pointer-events: none; }
+        
+        .content-layer { position: relative; z-index: 10; width: 100%; pointer-events: none; }
+        .interactive { pointer-events: auto; }
+        
+        /* 2. GLASS EFFECT */
+        .glass-overview { background: rgba(5, 5, 10, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 24px; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; }
+        
+        .nebula-text { background: linear-gradient(to right, #6366f1, #d946ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        section { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 0 10vw; }
+        
+        .hero-btn { border: 1px solid rgba(99, 102, 241, 0.5); background: rgba(99, 102, 241, 0.1); transition: all 0.3s ease; cursor: pointer; }
+        .hero-btn:hover { background: rgba(99, 102, 241, 0.2); box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+        
+        /* 3. NAV BAR */
+        nav { position: fixed; top: 0; width: 100%; z-index: 100; padding: 1.5rem 10vw; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); pointer-events: auto; }
+        
+        .typewriter-cursor { color: #6366f1; font-weight: 100; animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* Contact Styles */
+        input, textarea { background: rgba(255,255,255,0.05); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px; padding: 12px; color: white; outline: none; }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/typewriter-effect@latest/dist/core.js"></script>
+
+    <script type="text/babel">
+        const { useEffect, useRef } = React;
+
+        const initThree = () => {
+            const canvas = document.getElementById('bg-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            const starGeo = new THREE.BufferGeometry();
+            const starPos = new Float32Array(8000 * 3);
+            for(let i=0; i<24000; i++) starPos[i] = (Math.random() - 0.5) * 150;
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+            const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({color: 0xffffff, size: 0.05}));
+            scene.add(stars);
+
+            const saturnGroup = new THREE.Group();
+            const planet = new THREE.Mesh(
+                new THREE.SphereGeometry(4, 32, 32),
+                new THREE.MeshStandardMaterial({ color: 0x6366f1, wireframe: true })
+            );
+            const ring = new THREE.Mesh(
+                new THREE.TorusGeometry(7, 0.2, 2, 100),
+                new THREE.MeshStandardMaterial({ color: 0xd946ef, wireframe: true })
+            );
+            ring.rotation.x = Math.PI / 2;
+            saturnGroup.add(planet, ring);
+            saturnGroup.position.set(15, 0, -10); 
+            scene.add(saturnGroup);
+
+            const pLight = new THREE.PointLight(0xffffff, 2);
+            pLight.position.set(10, 10, 10);
+            scene.add(pLight);
+            scene.add(new THREE.AmbientLight(0x404040, 2));
+
+            camera.position.z = 25;
+
+            const animate = () => {
+                requestAnimationFrame(animate);
+                stars.rotation.y += 0.0002;
+                saturnGroup.rotation.y += 0.005;
+                saturnGroup.rotation.x += 0.001;
+                const scroll = window.scrollY / window.innerHeight;
+                saturnGroup.position.x = 15 - (scroll * 35); 
+                saturnGroup.position.y = -scroll * 5;
+                camera.position.y = -scroll * 10;
+                renderer.render(scene, camera);
+            };
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        };
+
+        const App = () => {
+            const typeRef = useRef(null);
+
+            useEffect(() => {
+                initThree();
+                if (window.Typewriter) {
+                    new Typewriter(typeRef.current, {
+                        strings: ['Digital Architect', 'AI Visionary', 'Deep Space Dev', 'Full-Stack Engineer'],
+                        autoStart: true, loop: true, cursor: '<span class="typewriter-cursor">|</span>'
+                    });
+                }
+            }, []);
+
+            return (
+                <div className="content-layer">
+                    <nav>
+                        <div className="font-black text-2xl italic tracking-tighter nebula-text">AMMAR HASHMI</div>
+                        <div className="hidden md:flex gap-12 text-[10px] font-bold tracking-widest text-gray-500">
+                            <a href="#hero" className="hover:text-white transition-colors">HOME</a>
+                            <a href="#about" className="hover:text-white transition-colors">OVERVIEW</a>
+                            <a href="#missions" className="hover:text-white transition-colors">PROJECTS</a>
+                            <a href="#chronicle" className="hover:text-white transition-colors">CHRONICLE</a>
+                            <a href="#portal" className="hover:text-white transition-colors uppercase">Portal</a>
+                        </div>
+                        <div className="flex gap-4 interactive">
+                            <a href="https://github.com/Ammar9999990" target="_blank" className="font-bold border-b border-indigo-500 text-sm">GITHUB</a>
+                        </div>
+                    </nav>
+
+                    <section id="hero">
+                        <div className="max-w-4xl relative z-20 interactive">
+                            <p className="text-indigo-400 font-bold tracking-[0.5em] mb-4 text-xs">I AM A DEVELOPER</p>
+                            <h1 className="text-7xl md:text-[10rem] font-black mb-6 tracking-tighter leading-[0.8] uppercase">
+                                AMMAR<br/><span className="nebula-text">HASHMI.</span>
+                            </h1>
+                            <div className="text-2xl md:text-5xl font-light text-white/90 leading-tight">
+                                I build <span ref={typeRef} className="font-bold border-b-2 border-indigo-500 pb-1"></span>
+                            </div>
+                            <p className="mt-12 text-gray-400 max-w-lg text-lg font-light leading-relaxed">
+                                Crafting high-performance full-stack systems and intelligent AI architectures for the next frontier. Goal: 100% precision.
+                            </p>
+                            <div className="mt-16">
+                                <a href="#missions" className="hero-btn px-12 py-5 rounded-full text-xs font-bold tracking-[0.3em] uppercase inline-block">
+                                    VIEW MISSIONS ↓
+                                </a>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="about" className="py-20 w-full flex items-center justify-center">
+                        <div className="w-full glass-overview p-10 md:p-16 border-t border-indigo-500/30 flex items-center justify-center interactive">
+                            <div className="max-w-6xl w-full">
+                                <h2 className="text-4xl font-black mb-8 italic nebula-text tracking-tighter uppercase">Profile Overview</h2>
+                                <p className="text-xl md:text-2xl font-light leading-relaxed mb-6">
+                                    I am a detail-oriented <span className="text-indigo-400 font-bold">Software Engineer</span> with a passion for building robust, secure applications. With <span className="text-white font-bold">2+ years of professional experience</span>, I bridge the gap between complex logic and user-centric design.
+                                </p>
+                                <p className="text-lg text-gray-400 leading-relaxed font-light">
+                                    I specialize in full-stack architecture, focusing on writing maintainable code that solves real-world enterprise problems effectively. Having experience of more than 2 Years, I can and will provide more than you ask, delivering high-impact solutions for any digital frontier. Precision and functionality are my guarantees.
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="missions" className="py-20">
+                        <h2 className="text-6xl font-black mb-20 italic nebula-text tracking-tighter uppercase">PROJECT Logs</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 w-full interactive">
+                            {[
+                                { 
+                                    title: "AI Library Manager", 
+                                    desc: "Enterprise C# system leveraging ML.NET for predictive analytics and Gemini Pro API for automated synthesis.", 
+                                    tech: "C# / ML.NET / Gemini API / MongoDB" 
+                                },
+                                { 
+                                    title: "HashTunes", 
+                                    desc: "Full-stack cloud audio engine. Deploys Firebase for media persistence and utilizes Web Audio API for library management.", 
+                                    tech: "React / Node.js / Firebase / Web Audio API" 
+                                },
+                                { 
+                                    title: "Expense Intelligence Tracker", 
+                                    desc: "Intelligent Android client. Tracks/logs fiscal data with predictive ML models offering real-time optimal budget scenarios.", 
+                                    tech: "Kotlin / Jetpack Compose / ML / MVVM" 
+                                },
+                                { 
+                                    title: "Movie Streaming Web", 
+                                    desc: "A high-fidelity streaming interface. Features dynamic metadata fetching from TMDB API and adaptive audio engine logic.", 
+                                    tech: "React / Node.js / TMDB API" 
+                                },
+                                { 
+                                    title: "Track Java Utility", 
+                                    desc: "A lean Java utility app focused on performance-driven financial data processing and secure SQLite persistence.", 
+                                    tech: "Java / SQLite / MVVM" 
+                                },
+                                { 
+                                    title: "AR Vision Mobile", 
+                                    desc: "Computer vision application for Android. Deploys real-time spatial object detection using Google ARCore and voice descriptions.", 
+                                    tech: "Kotlin / ARCore / Object Detection / NLP" 
+                                }
+                            ].map((p, i) => (
+                                <div key={i} className="glass p-12 hover:border-indigo-500/50 transition-all duration-300 pointer-events-auto cursor-pointer flex flex-col justify-between">
+                                    <div>
+                                        <h3 className="text-3xl font-bold mb-4 group-hover:text-indigo-400 transition-colors">{p.title}</h3>
+                                        <p className="text-gray-400 text-lg mb-8 leading-relaxed font-light">{p.desc}</p>
+                                    </div>
+                                    <div className="text-[10px] font-mono text-indigo-500 border border-indigo-500/30 px-4 py-1 rounded-full uppercase tracking-widest inline-block self-start">{p.tech}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+
+                    <section id="chronicle" className="py-20">
+                        <h2 className="text-6xl font-black mb-20 tracking-tighter uppercase">Chronicle Data</h2>
+                        <div className="glass p-14 border-l-[12px] border-indigo-600 w-full pointer-events-auto interactive">
+                            <h3 className="text-5xl font-black mb-2 uppercase">Bachelors in Computer Science</h3>
+                            <p className="text-indigo-400 font-mono text-2xl mb-8">2023 - 2027 | University of Central Punjab</p>
+                            <div className="space-y-6 text-gray-300 text-xl font-light">
+                                <p>🔭 <span className="text-white font-bold">Vibe Coder:</span> Transforming abstract logic and complex algorithms into cinematic interfaces.</p>
+                                <p>🤖 <span className="text-white font-bold">AI Expert:</span> Specializing in integrating LLMs (Gemini, TensorFlow) and ML models into production-level stacks.</p>
+                                <p>🏅 Academic Excellence: 1st Division Academic Excellence with distinction.</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* --- NEW PORTAL SECTION --- */}
+                    <section id="portal" className="py-20 flex items-center justify-center">
+                        <div className="max-w-4xl w-full glass-overview p-12 md:p-20 interactive text-center border-b border-indigo-500/30">
+                            <h2 className="text-6xl font-black mb-8 italic nebula-text uppercase tracking-tighter">The Portal</h2>
+                            <p className="text-gray-400 font-mono mb-12 tracking-widest uppercase text-sm">Waiting for incoming transmission...</p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 text-left">
+                                <input type="text" placeholder="Name" className="interactive" />
+                                <input type="email" placeholder="Email" className="interactive" />
+                                <textarea placeholder="Message" className="md:col-span-2 h-32 interactive"></textarea>
+                                <button className="md:col-span-2 hero-btn py-4 font-bold tracking-[0.3em] uppercase interactive">Send Signal</button>
+                            </div>
+
+                            <div className="flex justify-center gap-12 font-bold tracking-[0.2em] text-xs">
+                                <a href="https://github.com/Ammar9999990" target="_blank" className="hover:text-indigo-400 transition-colors">GITHUB</a>
+                                <a href="https://www.instagram.com/ammar9999990" className="hover:text-indigo-400 transition-colors">INSTAGRAM</a>
+                                <a href="mailto:ammarmuhammad1122@gmail.com" className="hover:text-indigo-400 transition-colors">GMAIL</a>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
